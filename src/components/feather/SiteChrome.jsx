@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
 import { Link, NavLink } from "react-router-dom";
 import { AUTH_APP_URL } from "../../utils/appLinks";
 import footerLogisticsVisual from "../../assets/feather-hero-logistics-visual-hd.webp";
@@ -135,11 +135,23 @@ function FooterBrandLogo() {
 }
 
 export function SiteHeader({ menuOpen, onToggleMenu, onCloseMenu }) {
+  const { scrollYProgress } = useScroll();
+  const progressScale = useSpring(scrollYProgress, {
+    stiffness: 140,
+    damping: 28,
+    mass: 0.25,
+  });
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[#d7eef1] bg-white/96 shadow-[0_10px_30px_rgba(4,62,69,0.06)]">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2.5 sm:gap-6 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-[#d7eef1] bg-white/92 shadow-[0_10px_30px_rgba(4,62,69,0.06)] backdrop-blur-xl">
+      <MotionDiv
+        className="absolute inset-x-0 bottom-[-1px] h-[2px] origin-left bg-[linear-gradient(90deg,#047b85,#ff821c)]"
+        style={{ scaleX: progressScale }}
+        aria-hidden="true"
+      />
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2 sm:gap-6 sm:px-6 lg:px-8">
         <Link to="/" className="shrink-0">
-          <img src={logoImage} alt={companyProfile.name} className="h-[4.75rem] w-auto object-contain sm:h-[5.4rem] lg:h-[5.8rem]" />
+          <img src={logoImage} alt={companyProfile.name} className="h-[4.15rem] w-auto object-contain sm:h-[4.7rem] lg:h-[5.1rem]" />
         </Link>
 
         <nav className="hidden flex-1 items-center justify-center gap-2 lg:flex xl:gap-3">

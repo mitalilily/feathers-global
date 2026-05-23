@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import heroLogisticsVisual from "../../assets/feather-hero-logistics-visual-hd.webp";
 import { AUTH_APP_URL } from "../../utils/appLinks";
 import Icon from "./Icons";
@@ -10,6 +10,7 @@ const MotionArticle = motion.article;
 const MotionButton = motion.button;
 const MotionDiv = motion.div;
 const MotionImg = motion.img;
+const MotionSpan = motion.span;
 
 const primaryButtonClass =
   "inline-flex min-h-12 w-full items-center justify-center gap-4 rounded-lg bg-[#047b85] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(4,123,133,0.18)] transition hover:-translate-y-0.5 hover:bg-[#056c76] sm:w-auto";
@@ -51,6 +52,12 @@ const courierPartners = [
     bg: "#07966f",
     accent: "#f7c948",
   },
+];
+
+const heroProofItems = [
+  { label: "Live routing", value: "27+ carriers", icon: "route" },
+  { label: "Dispatch ready", value: "labels + manifests", icon: "package" },
+  { label: "Ops support", value: "onboarding help", icon: "headset" },
 ];
 
 const whyChooseCards = [
@@ -581,12 +588,78 @@ function ActionAnchor({ href, children, className, style }) {
   );
 }
 
-function AlignedPanelSection({ children, shellClassName = "", innerClassName = "" }) {
+function HeroRouteOverlay() {
+  return (
+    <div className="hero-route-overlay" aria-hidden="true">
+      <svg className="hero-route-overlay__line" viewBox="0 0 640 360" fill="none">
+        <motion.path
+          d="M64 230 C150 150 238 170 316 108 C418 28 510 76 590 28"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="2"
+          strokeDasharray="10 12"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{ duration: 2.2, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </svg>
+      {[
+        { label: "SUR", className: "left-[9%] top-[58%]", delay: 0.75 },
+        { label: "DXB", className: "left-[47%] top-[25%]", delay: 0.95 },
+        { label: "LHR", className: "right-[7%] top-[8%]", delay: 1.15 },
+      ].map((pin) => (
+        <MotionSpan
+          key={pin.label}
+          initial={{ opacity: 0, y: 12, scale: 0.92 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.55, delay: pin.delay, ease: [0.22, 1, 0.36, 1] }}
+          className={`hero-route-overlay__pin ${pin.className}`}
+        >
+          {pin.label}
+        </MotionSpan>
+      ))}
+    </div>
+  );
+}
+
+function HeroProofStrip() {
+  return (
+    <div className="hero-proof-strip">
+      {heroProofItems.map((item, index) => (
+        <div
+          key={item.label}
+          className="hero-proof-strip__item"
+          style={{ animationDelay: `${0.36 + index * 0.08}s` }}
+        >
+          <span className="hero-proof-strip__icon">
+            <Icon name={item.icon} className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block text-[0.66rem] font-extrabold uppercase tracking-[0.14em] text-[#f47d21]">
+              {item.label}
+            </span>
+            <span className="mt-1 block text-sm font-semibold leading-snug text-[#071923]">
+              {item.value}
+            </span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AlignedPanelSection({ children, shellClassName = "", innerClassName = "", sectionNumber }) {
   return (
     <section className="section-transition bg-[#047b85]">
       <div
         className={`relative mx-auto max-w-[1518px] overflow-hidden rounded-t-[4.6rem] bg-[#f3fbff] px-5 pb-10 pt-12 sm:px-8 sm:pb-12 sm:pt-14 lg:px-16 ${shellClassName}`}
       >
+        <span className="pointer-events-none absolute inset-x-10 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(4,123,133,0.32),rgba(255,130,28,0.24),transparent)]" />
+        {sectionNumber ? (
+          <span className="pointer-events-none absolute right-6 top-6 hidden font-display text-[4.8rem] font-extrabold leading-none text-[#047b85]/[0.07] lg:block">
+            {sectionNumber}
+          </span>
+        ) : null}
         <div className={`mx-auto max-w-[1360px] ${innerClassName}`}>{children}</div>
       </div>
     </section>
@@ -610,9 +683,13 @@ function AlignedSectionHeading({ eyebrow, title, description, className = "" }) 
 }
 
 function HeroSection() {
+  const { scrollYProgress } = useScroll();
+  const visualY = useTransform(scrollYProgress, [0, 0.2], [0, -38]);
+  const visualScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.975]);
+
   return (
-    <section className="section-transition overflow-hidden bg-[#fbfefe] pt-14 sm:pt-18 lg:pt-20">
-      <div className="mx-auto grid max-w-[1440px] min-w-0 gap-8 px-5 pb-10 sm:px-8 lg:grid-cols-[0.44fr_0.56fr] lg:items-center lg:px-16 lg:pb-4">
+    <section className="hero-section section-transition overflow-hidden bg-[#fbfefe] pt-12 sm:pt-16 lg:pt-18">
+      <div className="mx-auto grid max-w-[1440px] min-w-0 grid-cols-1 gap-8 px-5 pb-10 sm:px-8 lg:grid-cols-[0.45fr_0.55fr] lg:items-center lg:px-16 lg:pb-4">
         <Reveal className="min-w-0" delay={0.04}>
           <div className="relative z-10 min-w-0 max-w-[40rem] lg:pb-4">
             <span className="text-[0.95rem] font-extrabold uppercase tracking-[0.12em] text-[#f47d21] sm:text-[1.12rem]">
@@ -622,19 +699,26 @@ function HeroSection() {
               <span className="block sm:whitespace-nowrap">Simplify Shipping.</span>
               <span className="mt-1 block text-[#087f8c]">Scale Globally.</span>
             </h1>
-            <p className="mt-7 max-w-full text-[1rem] leading-[1.85] text-[#0d1720] sm:max-w-[31rem] sm:text-[1.2rem]">
+            <p className="mt-7 max-w-[21.5rem] text-[1rem] leading-[1.85] text-[#0d1720] sm:max-w-[31rem] sm:text-[1.2rem]">
               Feather Global connects you with multiple courier partners through a single
-              integration-saving you time, money, and effort.
+              integration, saving you time, money, and effort.
             </p>
-            <div className="mt-9">
+            <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
               <ActionAnchor
                 href={AUTH_APP_URL}
-                className="inline-flex min-h-14 w-full items-center justify-center rounded-lg bg-[#037c87] px-7 py-4 text-base font-bold text-white shadow-[0_14px_28px_rgba(3,124,135,0.18)] transition hover:-translate-y-0.5 hover:bg-[#056c76] sm:w-auto"
+                className="inline-flex min-h-14 w-full max-w-[21.75rem] items-center justify-center rounded-lg bg-[#037c87] px-7 py-4 text-base font-bold text-white shadow-[0_14px_28px_rgba(3,124,135,0.18)] transition hover:-translate-y-0.5 hover:bg-[#056c76] sm:w-auto"
                 style={{ color: "#ffffff" }}
               >
                 Get Started
               </ActionAnchor>
+              <a
+                href="#site-footer"
+                className="inline-flex min-h-14 w-full max-w-[21.75rem] items-center justify-center rounded-lg border border-[#b9e0e5] bg-white px-7 py-4 text-base font-bold text-[#047b85] shadow-[0_12px_26px_rgba(4,123,133,0.06)] transition hover:-translate-y-0.5 hover:bg-[#eef9fb] sm:w-auto"
+              >
+                Talk to Us
+              </a>
             </div>
+            <HeroProofStrip />
           </div>
         </Reveal>
 
@@ -644,7 +728,8 @@ function HeroSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.25 }}
             transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-            className="relative min-h-[18rem] min-w-0 overflow-hidden sm:-mx-8 sm:min-h-[25rem] lg:-ml-14 lg:mr-[-3.5rem] lg:-mt-12 lg:min-h-[31rem]"
+            style={{ y: visualY, scale: visualScale }}
+            className="hero-visual-frame relative min-h-[18rem] min-w-0 overflow-hidden sm:-mx-8 sm:min-h-[25rem] lg:-ml-4 lg:mr-[-1rem] lg:-mt-10 lg:min-h-[31rem]"
           >
             <MotionImg
               src={heroLogisticsVisual}
@@ -653,6 +738,7 @@ function HeroSection() {
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               className="h-full min-h-[18rem] w-full max-w-full object-contain object-center sm:min-h-[25rem] lg:min-h-[31rem]"
             />
+            <HeroRouteOverlay />
           </MotionDiv>
         </Reveal>
       </div>
@@ -699,12 +785,12 @@ function PlatformsSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="text-center text-[0.76rem] font-bold uppercase tracking-[0.24em] text-white/82 sm:text-[0.78rem] sm:tracking-[0.46em]">
+          <p className="mx-auto max-w-[18rem] text-center text-[0.76rem] font-bold uppercase leading-6 tracking-[0.18em] text-white/82 sm:max-w-none sm:text-[0.78rem] sm:tracking-[0.46em]">
             Trusted Courier Partners Across India
           </p>
         </MotionDiv>
 
-        <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 lg:gap-8">
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-6 lg:gap-8">
           {courierPartners.map((partner, index) => (
             <MotionArticle
               key={partner.name}
@@ -1384,7 +1470,7 @@ function TestimonialsSection() {
 
 function WhatYouGetSection() {
   return (
-    <AlignedPanelSection>
+    <AlignedPanelSection sectionNumber="07">
       <div className="grid gap-10 xl:grid-cols-[0.36fr_0.64fr] xl:items-start">
         <Reveal>
           <div className="relative z-10">
@@ -1632,11 +1718,11 @@ function FaqSection() {
             {[
               { title: "Live Chat", detail: "Chat with our experts", icon: "messageSquare" },
               { title: "Email Us", detail: companyProfile.email, icon: "mail" },
-              { title: "Call Us", detail: "+1 (888) 123-4567", icon: "phone" },
+              { title: "Call Us", detail: companyProfile.phone, icon: "phone" },
             ].map((item, index) => (
               <a
                 key={item.title}
-                href={item.icon === "mail" ? `mailto:${companyProfile.email}` : item.icon === "phone" ? "tel:+18881234567" : AUTH_APP_URL}
+                href={item.icon === "mail" ? `mailto:${companyProfile.email}` : item.icon === "phone" ? `tel:${companyProfile.mobile}` : AUTH_APP_URL}
                 className={`flex items-center gap-5 border-b border-[#d5e6ea] px-7 py-7 transition hover:bg-white/70 lg:border-b-0 ${
                   index < 2 ? "lg:border-r" : ""
                 }`}
@@ -1686,7 +1772,14 @@ function AnalyticsDashboard() {
       <div className="mt-6 rounded-xl border border-[#e7f0f2] bg-white p-5">
         <div className="flex items-end gap-3">
           {dashboardBars.map((barClass, index) => (
-            <div key={`${barClass}-${index}`} className={`flex-1 rounded-t-[1rem] ${barClass}`} />
+            <MotionDiv
+              key={`${barClass}-${index}`}
+              initial={{ scaleY: 0.18, opacity: 0.45 }}
+              whileInView={{ scaleY: 1, opacity: 1 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.7, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+              className={`origin-bottom flex-1 rounded-t-[0.75rem] ${barClass}`}
+            />
           ))}
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -1701,7 +1794,7 @@ function AnalyticsDashboard() {
 
 function InsightsSection() {
   return (
-    <AlignedPanelSection>
+    <AlignedPanelSection sectionNumber="08">
       <div className="grid gap-10 lg:grid-cols-[0.45fr_0.55fr] lg:items-center">
         <Reveal>
           <div>
@@ -1755,8 +1848,12 @@ function CommercePanel() {
           </p>
           <div className="mt-4 grid gap-3">
             {["Shopify", "WooCommerce", "Amazon", "Flipkart"].map((label, index) => (
-              <div
+              <MotionDiv
                 key={label}
+                initial={{ opacity: 0, x: -14 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.48, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
               >
                 <span className="flex items-center gap-2">
@@ -1769,7 +1866,7 @@ function CommercePanel() {
                 <span className="rounded-full bg-[#D4F6FF] px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-700">
                   Synced
                 </span>
-              </div>
+              </MotionDiv>
             ))}
           </div>
         </div>
@@ -1784,13 +1881,20 @@ function CommercePanel() {
               ["Manifest ready", "Courier allocation completed"],
               ["Tracking live", "Customer timeline synced"],
             ].map(([title, detail], index) => (
-              <div key={title} className="rounded-lg bg-white px-4 py-3 shadow-sm">
+              <MotionDiv
+                key={title}
+                initial={{ opacity: 0, x: 14 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.48, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                className="rounded-lg bg-white px-4 py-3 shadow-sm"
+              >
                 <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                   <Icon name={index === 0 ? "package" : index === 1 ? "checkCircle" : "bell"} className="h-4 w-4" />
                   <span>{title}</span>
                 </p>
                 <p className="mt-1 text-sm text-slate-600">{detail}</p>
-              </div>
+              </MotionDiv>
             ))}
           </div>
         </div>
@@ -1799,12 +1903,19 @@ function CommercePanel() {
       <div className="mt-5 rounded-xl border border-[#e7f0f2] bg-white p-5">
         <div className="grid gap-3 sm:grid-cols-3">
           {["Orders received", "AWB sent back", "Tracking synced"].map((item, index) => (
-            <div key={item} className="rounded-lg bg-[#effcff] px-4 py-4 shadow-sm">
+            <MotionDiv
+              key={item}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.45 }}
+              transition={{ duration: 0.45, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-lg bg-[#effcff] px-4 py-4 shadow-sm"
+            >
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
                 Step 0{index + 1}
               </p>
               <p className="mt-2 text-sm font-semibold text-slate-900">{item}</p>
-            </div>
+            </MotionDiv>
           ))}
         </div>
       </div>
@@ -1814,7 +1925,7 @@ function CommercePanel() {
 
 function EcommerceSection() {
   return (
-    <AlignedPanelSection>
+    <AlignedPanelSection sectionNumber="09">
       <div className="grid gap-10 lg:grid-cols-[0.45fr_0.55fr] lg:items-center">
         <Reveal>
           <div>
@@ -1925,7 +2036,7 @@ function RateComparisonPreview() {
 
 function RateConfidenceSection() {
   return (
-    <AlignedPanelSection>
+    <AlignedPanelSection sectionNumber="10">
       <div className="grid gap-10 lg:grid-cols-[0.46fr_0.54fr] lg:items-center">
         <Reveal>
           <div>
@@ -2041,7 +2152,7 @@ function LaunchTimelineVisual() {
 
 function LaunchSupportSection() {
   return (
-    <AlignedPanelSection shellClassName="pb-12 sm:pb-14 lg:pb-16">
+    <AlignedPanelSection sectionNumber="11" shellClassName="pb-12 sm:pb-14 lg:pb-16">
       <div className="grid gap-10 lg:grid-cols-[0.54fr_0.46fr] lg:items-center">
         <Reveal>
           <LaunchTimelineVisual />
