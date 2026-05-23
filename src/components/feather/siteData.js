@@ -13,7 +13,8 @@ export const companyProfile = {
   mobile: "9217553934",
   phone: "92175 53934",
   email: "support@featherglobal.in",
-  address: "Chhatri Chauraha, Nai Basti, Pilibhit 262001",
+  address:
+    "A-1/4, Khodiyar Nagar Society near takshashila complex, Khodiyar Nagar road, Varachha, Surat - 395006",
 };
 
 export const trackingStatuses = [

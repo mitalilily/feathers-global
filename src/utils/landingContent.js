@@ -340,7 +340,8 @@ export const footerGroups = [
 ];
 
 export const footerMeta = {
-  address: "Chhatri Chauraha, Nai Basti, Pilibhit 262001",
+  address:
+    "A-1/4, Khodiyar Nagar Society near takshashila complex, Khodiyar Nagar road, Varachha, Surat - 395006",
   supportHours: "Mon-Sat, 9:00 AM to 7:00 PM",
   contactNumber: "+91 92175 53934",
 };
