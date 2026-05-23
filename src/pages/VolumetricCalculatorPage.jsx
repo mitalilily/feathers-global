@@ -28,7 +28,7 @@ function VolumetricCalculatorPage() {
       <section className="section-transition mt-20 sm:mt-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <VolumetricCalculatorCard className="surface-card rounded-[2.2rem] p-6 sm:p-8" />
+            <VolumetricCalculatorCard className="surface-card rounded-[1.6rem] p-5 sm:rounded-[2.2rem] sm:p-8" />
           </Reveal>
         </div>
       </section>

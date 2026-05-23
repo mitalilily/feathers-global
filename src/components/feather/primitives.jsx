@@ -130,11 +130,11 @@ export function InsightPreview() {
 
 export function Field({ label, name, type = "text", value, onChange, placeholder, postfix }) {
   return (
-    <label className="grid gap-2 text-sm font-medium text-slate-700">
+    <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
       <span>{label}</span>
-      <div className="relative">
+      <div className="relative min-w-0">
         <input
-          className={`w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100 ${
+          className={`w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100 ${
             postfix ? "pr-16" : ""
           }`}
           name={name}

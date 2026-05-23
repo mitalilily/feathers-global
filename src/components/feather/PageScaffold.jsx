@@ -128,13 +128,13 @@ export function PageHero({
 }) {
   return (
     <section className="section-transition pt-8 sm:pt-10 lg:pt-14">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_0.92fr] lg:items-center lg:px-8">
-        <Reveal delay={0.04}>
-          <div className="max-w-2xl">
+      <div className="mx-auto grid min-w-0 max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)] lg:items-center lg:px-8">
+        <Reveal className="min-w-0" delay={0.04}>
+          <div className="min-w-0 max-w-2xl">
             <span className="inline-flex items-center rounded-full border border-sky-200/80 bg-white/85 px-4 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-700 shadow-sm">
               {eyebrow}
             </span>
-            <h1 className="mt-6 font-display text-3xl leading-[1.08] text-slate-900 sm:text-5xl lg:text-[4rem]">
+            <h1 className="mt-6 break-words font-display text-3xl leading-[1.08] text-slate-900 sm:text-5xl lg:text-[4rem]">
               {title}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">{description}</p>
@@ -162,8 +162,8 @@ export function PageHero({
           </div>
         </Reveal>
 
-        <Reveal delay={0.12}>
-          <div className="hero-visual relative overflow-hidden rounded-[2rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(198,231,255,0.5),rgba(255,221,174,0.38))] p-4 shadow-[0_26px_70px_rgba(15,23,42,0.08)] sm:rounded-[2.5rem] sm:p-6 lg:p-7">
+        <Reveal className="min-w-0" delay={0.12}>
+          <div className="hero-visual relative min-w-0 overflow-hidden rounded-[1.6rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(198,231,255,0.5),rgba(255,221,174,0.38))] p-3 shadow-[0_26px_70px_rgba(15,23,42,0.08)] sm:rounded-[2.5rem] sm:p-6 lg:p-7">
             <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:24px_24px]" />
             <div className="absolute right-4 top-4 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:right-6 sm:top-6 sm:px-4 sm:text-xs">
               {visualLabel}

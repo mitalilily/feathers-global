@@ -12,6 +12,9 @@ const COURIER_CART_API = "https://api.couriercart.in/api";
 const PINCODE_API = "https://api.postalpincode.in/pincode";
 const paymentTypes = ["Prepaid", "COD"];
 const rateBucketKeys = ["rates", "localRates", "regionalRates", "metroRates", "nationalRates", "zonalRates"];
+const VOLUMETRIC_STORAGE_KEY = "feather-volumetric-calculator";
+const RATE_STORAGE_KEY = "feather-rate-calculator";
+const RATE_RESULT_STORAGE_KEY = "feather-rate-calculator-result";
 
 function parseNumber(value) {
   const number = Number(value);
@@ -67,7 +70,24 @@ function readStoredValue(key, fallback) {
 
   try {
     const stored = window.localStorage.getItem(key);
-    return stored ? { ...fallback, ...JSON.parse(stored) } : fallback;
+    if (!stored) {
+      return fallback;
+    }
+
+    const parsed = JSON.parse(stored);
+
+    if (
+      fallback &&
+      typeof fallback === "object" &&
+      !Array.isArray(fallback) &&
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed)
+    ) {
+      return { ...fallback, ...parsed };
+    }
+
+    return parsed ?? fallback;
   } catch {
     return fallback;
   }
@@ -87,11 +107,23 @@ function usePersistentState(key, fallback) {
   return [value, setValue];
 }
 
+function removeStoredValue(key) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Persistence is a convenience; the tools should still work if storage is unavailable.
+  }
+}
+
 export function VolumetricCalculatorCard({
   className = "surface-card rounded-[2rem] p-6",
   defaultValues = { length: "40", width: "32", height: "28", divisor: "5000" },
 }) {
-  const [form, setForm] = usePersistentState("feather-volumetric-calculator", defaultValues);
+  const [form, setForm] = usePersistentState(VOLUMETRIC_STORAGE_KEY, defaultValues);
   const length = Number(form.length) || 0;
   const width = Number(form.width) || 0;
   const height = Number(form.height) || 0;
@@ -106,21 +138,39 @@ export function VolumetricCalculatorCard({
     }));
   };
 
+  const handleReset = () => {
+    removeStoredValue(VOLUMETRIC_STORAGE_KEY);
+    setForm(defaultValues);
+  };
+
   return (
-    <MotionArticle whileHover={{ y: -6, scale: 1.01 }} transition={{ duration: 0.25 }} className={`${className} h-full`}>
-      <div className="flex items-start gap-4">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-          <Icon name="calculator" />
-        </span>
-        <div>
-          <h3 className="font-display text-2xl text-slate-900">Weight Calculator</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Work out volumetric and billable weight using carton dimensions and your preferred divisor.
-          </p>
+    <MotionArticle
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.25 }}
+      className={`${className} h-full min-w-0`}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+            <Icon name="calculator" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-display text-2xl text-slate-900">Weight Calculator</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Work out volumetric and billable weight using carton dimensions and your preferred divisor.
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 sm:w-auto"
+        >
+          Reset
+        </button>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Length (cm)" name="length" type="number" value={form.length} onChange={handleChange} placeholder="Enter length" />
         <Field label="Width (cm)" name="width" type="number" value={form.width} onChange={handleChange} placeholder="Enter width" />
         <Field label="Height (cm)" name="height" type="number" value={form.height} onChange={handleChange} placeholder="Enter height" />
@@ -130,7 +180,7 @@ export function VolumetricCalculatorCard({
       <div className="mt-6 grid gap-6 border-t border-slate-200 pt-6 sm:grid-cols-2">
         <div className="border-l-4 border-sky-300 pl-4 text-slate-900">
           <p className="text-sm text-slate-600">Volumetric weight</p>
-          <p className="mt-3 font-display text-4xl">
+          <p className="mt-3 font-display text-3xl sm:text-4xl">
             {volumetricWeight.toFixed(2)} <span className="text-xl text-slate-500">kg</span>
           </p>
         </div>
@@ -159,15 +209,15 @@ export function RateCalculatorCard({
     paymentType: "Prepaid",
   },
 }) {
-  const [form, setForm] = usePersistentState("feather-rate-calculator", defaultValues);
+  const [form, setForm] = usePersistentState(RATE_STORAGE_KEY, defaultValues);
   const [pincodeMeta, setPincodeMeta] = useState({
     pickup: { city: "", state: "", loading: false, message: "", tone: "muted" },
     delivery: { city: "", state: "", loading: false, message: "", tone: "muted" },
   });
-  const [couriers, setCouriers] = useState([]);
+  const [couriers, setCouriers] = usePersistentState(`${RATE_RESULT_STORAGE_KEY}-couriers`, []);
   const [calculating, setCalculating] = useState(false);
   const [calculatorError, setCalculatorError] = useState("");
-  const [showEstimate, setShowEstimate] = useState(false);
+  const [showEstimate, setShowEstimate] = usePersistentState(`${RATE_RESULT_STORAGE_KEY}-show`, false);
 
   const estimate = useMemo(
     () =>
@@ -228,6 +278,19 @@ export function RateCalculatorCard({
       ...current,
       [name]: nextValue,
     }));
+    setShowEstimate(false);
+    setCouriers([]);
+    setCalculatorError("");
+  };
+
+  const handleReset = () => {
+    removeStoredValue(RATE_STORAGE_KEY);
+    removeStoredValue(`${RATE_RESULT_STORAGE_KEY}-couriers`);
+    removeStoredValue(`${RATE_RESULT_STORAGE_KEY}-show`);
+    setForm(defaultValues);
+    setCouriers([]);
+    setCalculatorError("");
+    setShowEstimate(false);
   };
 
   const lookupPincode = async (pincode) => {
@@ -410,17 +473,30 @@ export function RateCalculatorCard({
   };
 
   return (
-    <MotionArticle whileHover={{ y: -6, scale: 1.01 }} transition={{ duration: 0.25 }} className={`${className} h-full`}>
-      <div className="flex items-start gap-4">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-          <Icon name="wallet" />
-        </span>
-        <div>
-          <h3 className="font-display text-2xl text-slate-900">Rate Calculator</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Check available courier partners and live guest rates with pickup, delivery, weight, and dimensions.
-          </p>
+    <MotionArticle
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.25 }}
+      className={`${className} h-full min-w-0`}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+            <Icon name="wallet" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-display text-2xl text-slate-900">Rate Calculator</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Check available courier partners and live guest rates with pickup, delivery, weight, and dimensions.
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={handleReset}
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50 sm:w-auto"
+        >
+          Reset
+        </button>
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -468,7 +544,7 @@ export function RateCalculatorCard({
         <label className="grid gap-2 text-sm font-medium text-slate-700">
           <span>Payment Type</span>
           <select
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+            className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
             name="paymentType"
             value={form.paymentType}
             onChange={handleChange}
@@ -494,10 +570,10 @@ export function RateCalculatorCard({
       {calculatorError ? <p className="mt-4 text-sm font-semibold text-red-500">{calculatorError}</p> : null}
 
       {showEstimate && estimate.chargeableWeightKg > 0 ? (
-        <div className="mt-6 grid gap-4 border-t border-slate-200 pt-6 md:grid-cols-3">
+        <div className="mt-6 grid min-w-0 gap-4 border-t border-slate-200 pt-6 md:grid-cols-3">
           <div className="border-l-4 border-amber-300 pl-4 text-slate-900">
             <p className="text-sm text-slate-600">Indicative estimate</p>
-            <p className="mt-3 font-display text-4xl">{formatCurrency(estimate.estimatedCost)}</p>
+            <p className="mt-3 break-words font-display text-3xl sm:text-4xl">{formatCurrency(estimate.estimatedCost)}</p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Built from chargeable weight, delivery zone, and payment type so the calculator still returns a rate
               when live courier quotes are unavailable.
@@ -505,7 +581,7 @@ export function RateCalculatorCard({
           </div>
           <div className="border-l-4 border-sky-300 pl-4 text-slate-900">
             <p className="text-sm text-slate-500">Billable weight</p>
-            <p className="mt-3 font-display text-3xl">{estimate.chargeableWeightKg.toFixed(2)} kg</p>
+            <p className="mt-3 font-display text-2xl sm:text-3xl">{estimate.chargeableWeightKg.toFixed(2)} kg</p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Actual: {estimate.actualWeightKg.toFixed(2)} kg
               <br />
@@ -514,14 +590,14 @@ export function RateCalculatorCard({
           </div>
           <div className="border-l-4 border-emerald-300 pl-4 text-slate-900">
             <p className="text-sm text-slate-500">Zone and ETA</p>
-            <p className="mt-3 font-display text-3xl">{estimate.zoneLabel}</p>
+            <p className="mt-3 font-display text-2xl sm:text-3xl">{estimate.zoneLabel}</p>
             <p className="mt-3 text-sm leading-6 text-slate-600">Estimated transit: {estimate.eta}</p>
           </div>
         </div>
       ) : null}
 
       {couriers.length > 0 ? (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+        <div className="mt-6 max-w-full overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
           <table className="w-full min-w-[700px] table-auto text-left">
             <thead className="bg-sky-50 text-slate-900">
               <tr>
